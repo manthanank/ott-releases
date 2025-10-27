@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:5000/api/ott',
+  apiUrl: 'https://ott-releases-api.vercel.app/api/ott',
   trackingApiUrl: 'https://visitor-tracking-api.vercel.app/api/visit',
 };
