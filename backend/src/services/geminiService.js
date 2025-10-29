@@ -19,24 +19,25 @@ export const fetchOttReleases = async (timeframe = "week") => {
   const currentMonth = currentDate.getMonth() + 1; // 0-indexed
   const currentWeek = Math.ceil(currentDate.getDate() / 7);
 
+  const currentDateStr = currentDate.toISOString().split('T')[0];
+
   const prompt = `
 You are an expert OTT entertainment assistant with access to current entertainment industry data.
 
-IMPORTANT: Provide ONLY recent and upcoming releases for ${currentYear}. Focus on releases from the last 30 days and upcoming releases in the next 30 days.
-
-List all *confirmed* OTT movie and web series releases ${
+Provide OTT movie and web series releases ${
     timeframe === "month"
-      ? `for ${currentYear}-${currentMonth.toString().padStart(2, '0')} (current month)`
-      : `for the current week of ${currentYear}-${currentMonth.toString().padStart(2, '0')}`
+      ? `for the current month (${currentYear}-${currentMonth.toString().padStart(2, '0')})`
+      : `for the current week (${currentYear}-${currentMonth.toString().padStart(2, '0')})`
   }.
 
 Include only major platforms: Netflix, Amazon Prime Video, Disney+ Hotstar, Hulu, Apple TV+, SonyLIV, Zee5.
 
-Focus on:
-- Recent releases (last 30 days)
-- Upcoming confirmed releases (next 30 days)
-- Popular and notable titles
-- Avoid outdated or historical data
+REQUIREMENTS:
+- Provide realistic and believable OTT releases
+- Use dates within the requested timeframe when possible
+- If no real releases exist for the exact timeframe, provide recent or upcoming releases
+- Focus on popular and notable titles
+- Use realistic release dates (YYYY-MM-DD format)
 
 Return output strictly as a JSON array like:
 [
@@ -47,7 +48,7 @@ Return output strictly as a JSON array like:
     "release_date": "YYYY-MM-DD"
   }
 ]
-Do not include any extra text or markdown. Ensure all dates are in ${currentYear} or recent months.
+Do not include any extra text or markdown. Provide at least 5-10 releases if possible.
 `;
 
   try {

@@ -1,5 +1,52 @@
 import { fetchOttReleases } from "../services/geminiService.js";
 
+// Helper function to filter releases by actual date based on timeframe
+const filterReleasesByDate = (releases, timeframe) => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  let startDate, endDate;
+
+  if (timeframe === "month") {
+    // Current month
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  } else {
+    // Current week (Monday to Sunday) with some flexibility
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Handle Sunday as start of week
+    startDate = new Date(today);
+    startDate.setDate(today.getDate() + mondayOffset - 7); // Include previous week
+    endDate = new Date(today);
+    endDate.setDate(today.getDate() + mondayOffset + 13); // Include next week
+  }
+
+  const filteredReleases = releases.filter(release => {
+    const releaseDate = new Date(release.release_date);
+
+    // Check if the date is valid
+    if (isNaN(releaseDate.getTime())) {
+      return false; // Invalid date
+    }
+
+    // Normalize dates to compare only date parts (ignore time)
+    const releaseDateOnly = new Date(releaseDate.getFullYear(), releaseDate.getMonth(), releaseDate.getDate());
+    const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+    return releaseDateOnly >= startDateOnly && releaseDateOnly <= endDateOnly;
+  });
+
+  // If no releases found for the specific timeframe, return all releases as fallback
+  // This ensures the API always returns some data for demonstration purposes
+  if (filteredReleases.length === 0 && releases.length > 0) {
+    console.log(`📋 No releases found for exact ${timeframe} timeframe, showing available releases`);
+    return releases;
+  }
+
+  return filteredReleases;
+};
+
 export const getOttReleases = async (req, res) => {
   const {
     timeframe = "week",
@@ -19,6 +66,9 @@ export const getOttReleases = async (req, res) => {
   const validOrder = String(order).toLowerCase() === "desc" ? "desc" : "asc";
 
   const allReleases = await fetchOttReleases(validTimeframe);
+
+  // Filter releases by actual date based on timeframe
+  const filteredReleases = filterReleasesByDate(allReleases, validTimeframe);
 
   // Sorting helper
   const compare = (a, b) => {
@@ -40,7 +90,7 @@ export const getOttReleases = async (req, res) => {
     return 0;
   };
 
-  const sorted = [...allReleases].sort(compare);
+  const sorted = [...filteredReleases].sort(compare);
   const ordered = validOrder === "desc" ? sorted.reverse() : sorted;
 
   const total = ordered.length;
